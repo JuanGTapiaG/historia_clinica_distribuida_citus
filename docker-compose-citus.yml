@@ -1,23 +1,33 @@
-
-version: '3.8'
-
 services:
   citus_coordinator:
     image: citusdata/citus:11.2
     container_name: citus_coordinator
     ports:
-      - "5432:5432"
+      - "5436:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: historia_clinica
-      Citus_Enable: "true"
+      POSTGRES_HOST_AUTH_METHOD: trust
+      PGPASSWORD: admin
     depends_on:
-      - citus_worker1
-      - citus_worker2
+      citus_worker1:
+        condition: service_healthy
+      citus_worker2:
+        condition: service_healthy
     command: ["docker-entrypoint.sh", "postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - coordinator_data:/var/lib/postgresql/data
+      - ./schema_citus.sql:/mnt/schema_citus.sql
+      - ./insert_datos.sql:/mnt/insert_datos.sql
+      - ./init-citus.sh:/mnt/init-citus.sh
+    networks:
+      - citus_net
 
   citus_worker1:
     image: citusdata/citus:11.2
@@ -26,10 +36,17 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: historia_clinica
-      Citus_Enable: "true"
+      POSTGRES_HOST_AUTH_METHOD: trust
     command: ["docker-entrypoint.sh", "postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - worker1_data:/var/lib/postgresql/data
+    networks:
+      - citus_net
 
   citus_worker2:
     image: citusdata/citus:11.2
@@ -38,12 +55,23 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: historia_clinica
-      Citus_Enable: "true"
+      POSTGRES_HOST_AUTH_METHOD: trust
     command: ["docker-entrypoint.sh", "postgres", "-c", "wal_level=logical"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - worker2_data:/var/lib/postgresql/data
+    networks:
+      - citus_net
 
 volumes:
   coordinator_data:
   worker1_data:
   worker2_data:
+
+networks:
+  citus_net:
+    driver: bridge
