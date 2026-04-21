@@ -1,0 +1,21 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Docker volumes (local data)
+coordinator_data/
+worker1_data/
+worker2_data/
+
+# Logs
+*.log
+
+# Environment variables
+.env
