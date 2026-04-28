@@ -1,0 +1,49 @@
+# =============================================================================
+# Dockerfile.centos
+# Imagen personalizada de CentOS Stream 9 con PostgreSQL 16 + Citus 13
+# Para el laboratorio de Historia Clínica Distribuida
+# =============================================================================
+
+FROM quay.io/centos/centos:stream9
+
+LABEL maintainer="Juan G. Tapia G."
+LABEL description="PostgreSQL 16 + Citus 13 sobre CentOS Stream 9"
+
+# --- Variables de entorno ---
+ENV PG_MAJOR=16
+ENV PGDATA=/var/lib/pgsql/16/data
+ENV PATH="/usr/pgsql-16/bin:${PATH}"
+
+# --- 1. Instalar repositorios (PGDG + Citus) ---
+RUN dnf install -y \
+        https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
+        epel-release \
+    && dnf -qy module disable postgresql \
+    && dnf clean all
+
+# --- 2. Instalar Citus repo ---
+RUN curl -s https://install.citusdata.com/community/rpm.sh | bash
+
+# --- 3. Instalar PostgreSQL 16 + Citus ---
+RUN dnf install -y \
+        postgresql16-server \
+        postgresql16-contrib \
+        citus_16 \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# --- 4. Crear el script de entrypoint ---
+COPY docker-entrypoint-centos.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# --- 5. Crear directorio para SQL montados ---
+RUN mkdir -p /mnt
+
+# --- 6. Exponer puerto PostgreSQL ---
+EXPOSE 5432
+
+# --- 7. Ejecutar como usuario postgres ---
+USER postgres
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres"]

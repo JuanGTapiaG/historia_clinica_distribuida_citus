@@ -1,0 +1,84 @@
+# =============================================================================
+# docker-compose-centos.yml
+# Orquestación del clúster Citus sobre CentOS Stream 9
+# 1 coordinador + 2 workers
+# =============================================================================
+
+services:
+  centos_coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile.centos
+    container_name: centos_coordinator
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: historia_clinica
+    depends_on:
+      centos_worker1:
+        condition: service_healthy
+      centos_worker2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/pgsql-16/bin/pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    volumes:
+      - centos_coordinator_data:/var/lib/pgsql/16/data
+      - ./schema_citus.sql:/mnt/schema_citus.sql:ro
+      - ./insert_datos.sql:/mnt/insert_datos.sql:ro
+    networks:
+      - centos_citus_net
+
+  centos_worker1:
+    build:
+      context: .
+      dockerfile: Dockerfile.centos
+    container_name: centos_worker1
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: historia_clinica
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/pgsql-16/bin/pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    volumes:
+      - centos_worker1_data:/var/lib/pgsql/16/data
+    networks:
+      - centos_citus_net
+
+  centos_worker2:
+    build:
+      context: .
+      dockerfile: Dockerfile.centos
+    container_name: centos_worker2
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: historia_clinica
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/pgsql-16/bin/pg_isready -U admin -d historia_clinica"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    volumes:
+      - centos_worker2_data:/var/lib/pgsql/16/data
+    networks:
+      - centos_citus_net
+
+volumes:
+  centos_coordinator_data:
+  centos_worker1_data:
+  centos_worker2_data:
+
+networks:
+  centos_citus_net:
+    driver: bridge
