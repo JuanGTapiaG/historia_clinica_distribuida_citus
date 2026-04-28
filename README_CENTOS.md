@@ -346,9 +346,10 @@ psql -h localhost -p 5437 -U admin -d historia_clinica
 
 ## 👤 Autor
 
+**Omar A. Gomez F.**
+
 **Juan G. Tapia G.**
 
-- GitHub: [@JuanGTapiaG](https://github.com/JuanGTapiaG)
 
 ---
 
