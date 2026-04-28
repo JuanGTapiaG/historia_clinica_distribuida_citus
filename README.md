@@ -367,9 +367,9 @@ docker-compose -f docker-compose-citus.yml down -v
 
 ## 👤 Autor
 
-**Juan G. Tapia G.**
+**Omar A. Gomez F.**
 
-- GitHub: [@JuanGTapiaG](https://github.com/JuanGTapiaG)
+**Juan G. Tapia G.**
 
 ---
 
